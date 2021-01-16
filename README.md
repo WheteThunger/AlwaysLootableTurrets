@@ -29,4 +29,4 @@ Default configuration:
 }
 ```
 
-- `RequireOwnerPermission` (`true` or `false`) -- While `true`, only auto turrets deployed by players with the `alwayslootableturrets.owner` permission will be lootable. While `false`, all auto turrets can be looted while powered.
+- `RequireOwnerPermission` (`true` or `false`) -- While `true`, only auto turrets deployed by players with the `alwayslootableturrets.owner` permission will be lootable while powered. While `false`, all auto turrets can be looted while powered.
