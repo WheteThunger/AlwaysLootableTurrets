@@ -15,8 +15,6 @@ This plugin works by tricking clients into believing each auto turret is off, by
   - This prevents players from seeing the turret around corners (or sometimes through doors or walls) unless it has a laser sight or flashlight attachment
   - This also prevents players from being able to visually determine whether the turret is in peacekeeper mode
 
-This makes the turrets less conspicuous (feature?) and so it's not possible to visually determine whether the turret is in peacekeeper mode (minor issue for most).
-
 ## Permissions
 
 - `alwayslootableturrets.owner` -- Turrets deployed by players with this permission can be looted while powered. Not required if the plugin is configured with `RequireOwnerPermission` set to `false` (default).
