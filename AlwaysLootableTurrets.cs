@@ -6,7 +6,7 @@ using System.Linq;
 
 namespace Oxide.Plugins
 {
-    [Info("Always Lootable Turrets", "WhiteThunder", "0.1.0")]
+    [Info("Always Lootable Turrets", "WhiteThunder", "1.0.0")]
     [Description("Allows players to loot auto turrets while powered.")]
     internal class AlwaysLootableTurrets : CovalencePlugin
     {
