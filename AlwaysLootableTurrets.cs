@@ -6,13 +6,13 @@ using System.Linq;
 
 namespace Oxide.Plugins
 {
-    [Info("Lootable Powered Turrets", "WhiteThunder", "0.1.0")]
+    [Info("Always Lootable Turrets", "WhiteThunder", "0.1.0")]
     [Description("Allows players to loot auto turrets while powered.")]
-    internal class LootablePoweredTurrets : CovalencePlugin
+    internal class AlwaysLootableTurrets : CovalencePlugin
     {
         #region Fields
 
-        private const string PermissionOwner = "lootablepoweredturrets.owner";
+        private const string PermissionOwner = "alwayslootableturrets.owner";
 
         private const string PrefabCodeLockDeniedEffect = "assets/prefabs/locks/keypad/effects/lock.code.denied.prefab";
 
@@ -52,7 +52,7 @@ namespace Oxide.Plugins
 
             return null;
         }
-        
+
         private int RemoveOnFlag(int flags)
         {
             return flags & ~(int)BaseEntity.Flags.On;

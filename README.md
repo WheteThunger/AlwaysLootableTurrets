@@ -19,7 +19,7 @@ This makes the turrets less conspicuous (feature?) and so it's not possible to v
 
 ## Permissions
 
-- `lootablepoweredturrets.owner` -- Turrets deployed by players with this permission can be looted while powered. Not required if the plugin is configured with `RequireOwnerPermission` set to `false` (default).
+- `alwayslootableturrets.owner` -- Turrets deployed by players with this permission can be looted while powered. Not required if the plugin is configured with `RequireOwnerPermission` set to `false` (default).
 
 ## Configuration
 
@@ -31,4 +31,4 @@ Default configuration:
 }
 ```
 
-- `RequireOwnerPermission` (`true` or `false`) -- While `true`, only auto turrets deployed by players with the `lootablepoweredturrets.owner` permission will be lootable. While `false`, all auto turrets can be looted while powered.
+- `RequireOwnerPermission` (`true` or `false`) -- While `true`, only auto turrets deployed by players with the `alwayslootableturrets.owner` permission will be lootable. While `false`, all auto turrets can be looted while powered.
