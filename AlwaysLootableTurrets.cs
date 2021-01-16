@@ -16,7 +16,7 @@ namespace Oxide.Plugins
 
         private const string PrefabCodeLockDeniedEffect = "assets/prefabs/locks/keypad/effects/lock.code.denied.prefab";
 
-        private Configuration pluginConfig;
+        private Configuration _pluginConfig;
 
         #endregion
 
@@ -38,13 +38,13 @@ namespace Oxide.Plugins
 
         private void OnEntitySaved(AutoTurret turret, BaseNetworkable.SaveInfo saveInfo)
         {
-            if (IsTurretAllowed(turret) && turret.IsOnline() && TurretHasPermission(turret))
+            if (turret.IsOnline() && IsTurretEligible(turret) && TurretHasPermission(turret))
                 saveInfo.msg.baseEntity.flags = RemoveOnFlag(saveInfo.msg.baseEntity.flags);
         }
 
         private object OnEntityFlagsNetworkUpdate(AutoTurret turret)
         {
-            if (IsTurretAllowed(turret) && turret.IsOnline() && TurretHasPermission(turret))
+            if (turret.IsOnline() && IsTurretEligible(turret) && TurretHasPermission(turret))
             {
                 SendFlagUpdate(turret);
                 return false;
@@ -53,23 +53,18 @@ namespace Oxide.Plugins
             return null;
         }
 
-        private int RemoveOnFlag(int flags)
-        {
-            return flags & ~(int)BaseEntity.Flags.On;
-        }
-
         #endregion
 
         #region Helper Methods
 
-        private bool IsTurretAllowed(AutoTurret turret)
+        private bool IsTurretEligible(AutoTurret turret)
         {
             return !(turret is NPCAutoTurret);
         }
 
         private bool TurretHasPermission(AutoTurret turret)
         {
-            if (!pluginConfig.RequireOwnerPermission)
+            if (!_pluginConfig.RequireOwnerPermission)
                 return true;
 
             if (turret.OwnerID == 0)
@@ -90,6 +85,11 @@ namespace Oxide.Plugins
                 Net.sv.write.Send(info);
             }
             turret.gameObject.SendOnSendNetworkUpdate(turret);
+        }
+
+        private int RemoveOnFlag(int flags)
+        {
+            return flags & ~(int)BaseEntity.Flags.On;
         }
 
         #endregion
@@ -177,20 +177,20 @@ namespace Oxide.Plugins
             return changed;
         }
 
-        protected override void LoadDefaultConfig() => pluginConfig = GetDefaultConfig();
+        protected override void LoadDefaultConfig() => _pluginConfig = GetDefaultConfig();
 
         protected override void LoadConfig()
         {
             base.LoadConfig();
             try
             {
-                pluginConfig = Config.ReadObject<Configuration>();
-                if (pluginConfig == null)
+                _pluginConfig = Config.ReadObject<Configuration>();
+                if (_pluginConfig == null)
                 {
                     throw new JsonException();
                 }
 
-                if (MaybeUpdateConfig(pluginConfig))
+                if (MaybeUpdateConfig(_pluginConfig))
                 {
                     LogWarning("Configuration appears to be outdated; updating and saving");
                     SaveConfig();
@@ -206,7 +206,7 @@ namespace Oxide.Plugins
         protected override void SaveConfig()
         {
             Log($"Configuration changes saved to {Name}.json");
-            Config.WriteObject(pluginConfig, true);
+            Config.WriteObject(_pluginConfig, true);
         }
 
         #endregion
