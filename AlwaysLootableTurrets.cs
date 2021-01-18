@@ -47,7 +47,7 @@ namespace Oxide.Plugins
             if (turret.IsOnline() && IsTurretEligible(turret) && TurretHasPermission(turret))
             {
                 SendFlagUpdate(turret);
-                return false;
+                return true;
             }
 
             return null;
