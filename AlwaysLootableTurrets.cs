@@ -16,7 +16,10 @@ namespace Oxide.Plugins
 
         private const string PrefabCodeLockDeniedEffect = "assets/prefabs/locks/keypad/effects/lock.code.denied.prefab";
 
-        private Configuration _pluginConfig;
+        private readonly object False = false;
+        private readonly object True = true;
+
+        private Configuration _config;
 
         #endregion
 
@@ -33,7 +36,7 @@ namespace Oxide.Plugins
                 return null;
 
             Effect.server.Run(PrefabCodeLockDeniedEffect, turret.transform.position);
-            return false;
+            return False;
         }
 
         private void OnEntitySaved(AutoTurret turret, BaseNetworkable.SaveInfo saveInfo)
@@ -47,7 +50,7 @@ namespace Oxide.Plugins
             if (turret.IsOnline() && IsTurretEligible(turret) && TurretHasPermission(turret))
             {
                 SendFlagUpdate(turret);
-                return true;
+                return True;
             }
 
             return null;
@@ -57,14 +60,35 @@ namespace Oxide.Plugins
 
         #region Helper Methods
 
-        private bool IsTurretEligible(AutoTurret turret)
+        private static bool IsTurretEligible(AutoTurret turret)
         {
-            return !(turret is NPCAutoTurret);
+            return turret is not NPCAutoTurret;
+        }
+
+        private static void SendFlagUpdate(AutoTurret turret)
+        {
+            var subscribers = turret.GetSubscribers();
+
+            if (subscribers is { Count: > 0 })
+            {
+                var write = Net.sv.StartWrite();
+                write.PacketID(Message.Type.EntityFlags);
+                write.EntityID(turret.net.ID);
+                write.Int32(RemoveOnFlag((int)turret.flags));
+                write.Send(new SendInfo(subscribers));
+            }
+
+            turret.gameObject.SendOnSendNetworkUpdate(turret);
+        }
+
+        private static int RemoveOnFlag(int flags)
+        {
+            return flags & ~(int)BaseEntity.Flags.On;
         }
 
         private bool TurretHasPermission(AutoTurret turret)
         {
-            if (!_pluginConfig.RequireOwnerPermission)
+            if (!_config.RequireOwnerPermission)
                 return true;
 
             if (turret.OwnerID == 0)
@@ -73,49 +97,28 @@ namespace Oxide.Plugins
             return permission.UserHasPermission(turret.OwnerID.ToString(), PermissionOwner);
         }
 
-        private void SendFlagUpdate(AutoTurret turret)
-        {
-            List<Connection> subscribers = turret.GetSubscribers();
-            if (subscribers != null && subscribers.Count > 0)
-            {
-                var write = Net.sv.StartWrite();
-                write.PacketID(Message.Type.EntityFlags);
-                write.EntityID(turret.net.ID);
-                write.Int32(RemoveOnFlag((int)turret.flags));
-                write.Send(new SendInfo(subscribers));
-            }
-            turret.gameObject.SendOnSendNetworkUpdate(turret);
-        }
-
-        private int RemoveOnFlag(int flags)
-        {
-            return flags & ~(int)BaseEntity.Flags.On;
-        }
-
         #endregion
 
         #region Configuration
 
-        internal class Configuration : SerializableConfiguration
+        private class Configuration : BaseConfiguration
         {
             [JsonProperty("RequireOwnerPermission")]
             public bool RequireOwnerPermission = false;
         }
 
-        private Configuration GetDefaultConfig() => new Configuration();
+        private Configuration GetDefaultConfig() => new();
 
-        #endregion
+        #region Configuration Helpers
 
-        #region Configuration Boilerplate
-
-        internal class SerializableConfiguration
+        private class BaseConfiguration
         {
             public string ToJson() => JsonConvert.SerializeObject(this);
 
             public Dictionary<string, object> ToDictionary() => JsonHelper.Deserialize(ToJson()) as Dictionary<string, object>;
         }
 
-        internal static class JsonHelper
+        private static class JsonHelper
         {
             public static object Deserialize(string json) => ToObject(JToken.Parse(json));
 
@@ -137,7 +140,7 @@ namespace Oxide.Plugins
             }
         }
 
-        private bool MaybeUpdateConfig(SerializableConfiguration config)
+        private bool MaybeUpdateConfig(BaseConfiguration config)
         {
             var currentWithDefaults = config.ToDictionary();
             var currentRaw = Config.ToDictionary(x => x.Key, x => x.Value);
@@ -146,17 +149,15 @@ namespace Oxide.Plugins
 
         private bool MaybeUpdateConfigDict(Dictionary<string, object> currentWithDefaults, Dictionary<string, object> currentRaw)
         {
-            bool changed = false;
+            var changed = false;
 
             foreach (var key in currentWithDefaults.Keys)
             {
-                object currentRawValue;
-                if (currentRaw.TryGetValue(key, out currentRawValue))
+                if (currentRaw.TryGetValue(key, out var currentRawValue))
                 {
-                    var defaultDictValue = currentWithDefaults[key] as Dictionary<string, object>;
                     var currentDictValue = currentRawValue as Dictionary<string, object>;
 
-                    if (defaultDictValue != null)
+                    if (currentWithDefaults[key] is Dictionary<string, object> defaultDictValue)
                     {
                         if (currentDictValue == null)
                         {
@@ -177,20 +178,20 @@ namespace Oxide.Plugins
             return changed;
         }
 
-        protected override void LoadDefaultConfig() => _pluginConfig = GetDefaultConfig();
+        protected override void LoadDefaultConfig() => _config = GetDefaultConfig();
 
         protected override void LoadConfig()
         {
             base.LoadConfig();
             try
             {
-                _pluginConfig = Config.ReadObject<Configuration>();
-                if (_pluginConfig == null)
+                _config = Config.ReadObject<Configuration>();
+                if (_config == null)
                 {
                     throw new JsonException();
                 }
 
-                if (MaybeUpdateConfig(_pluginConfig))
+                if (MaybeUpdateConfig(_config))
                 {
                     LogWarning("Configuration appears to be outdated; updating and saving");
                     SaveConfig();
@@ -206,8 +207,10 @@ namespace Oxide.Plugins
         protected override void SaveConfig()
         {
             Log($"Configuration changes saved to {Name}.json");
-            Config.WriteObject(_pluginConfig, true);
+            Config.WriteObject(_config, true);
         }
+
+        #endregion
 
         #endregion
     }
