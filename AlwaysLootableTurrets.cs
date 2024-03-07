@@ -6,7 +6,7 @@ using System.Linq;
 
 namespace Oxide.Plugins
 {
-    [Info("Always Lootable Turrets", "WhiteThunder", "1.0.1")]
+    [Info("Always Lootable Turrets", "WhiteThunder", "1.0.2")]
     [Description("Allows players to loot auto turrets while powered.")]
     internal class AlwaysLootableTurrets : CovalencePlugin
     {
@@ -71,8 +71,7 @@ namespace Oxide.Plugins
 
             if (subscribers is { Count: > 0 })
             {
-                var write = Net.sv.StartWrite();
-                write.PacketID(Message.Type.EntityFlags);
+                var write = Net.sv.StartWrite(Message.Type.EntityFlags);
                 write.EntityID(turret.net.ID);
                 write.Int32(RemoveOnFlag((int)turret.flags));
                 write.Send(new SendInfo(subscribers));
